@@ -64,7 +64,6 @@ class Overview extends StatelessWidget {
                 controller: overviewController,
                 title: I18n.log.tr,
                 enableCollapse: false)
-            .marginOnly(left: 10, top: 0)
             .expanded()
       ].toRow();
     }
@@ -95,7 +94,7 @@ class Overview extends StatelessWidget {
             };
           }),
           IconButton(
-            onPressed: () => {controller.activeScript()},
+            onPressed: () => {controller.toggleScript()},
             icon: const Icon(Icons.power_settings_new_rounded),
             isSelected: controller.scriptState.value == ScriptState.running,
           ),
