@@ -12,9 +12,9 @@ class ServerController extends GetxController with LogMixin {
 
   @override
   void onInit() {
-    rootPathServer.value =
-        Get.find<SettingsController>().storage.read('rootPathServer') ??
-            'Please set OAS root path';
+    final storage = GetStorage();
+    rootPathServer.value = storage.read(StorageKey.rootPathServer.name) ??
+        'Please set OAS root path';
     shell = getShell;
     shellController.stream.listen((event) {
       addLog('INFO: $event');
@@ -24,6 +24,27 @@ class ServerController extends GetxController with LogMixin {
       readDeploy();
     }
     super.onInit();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    if (!rootPathAuthenticated.value) {
+      return;
+    }
+    final storage = GetStorage();
+    bool autoStartServer =
+        (storage.read(StorageKey.autoStartServer.name) as bool?) ?? false;
+    bool autoStartScript =
+        (storage.read(StorageKey.autoStartScript.name) as bool?) ?? false;
+    if (autoStartServer) {
+      startServer();
+    }
+    final address = (storage.read(StorageKey.address.name) as String?) ?? '';
+    // 配置了自动启动脚本且有address
+    if (autoStartScript && address.isNotEmpty) {
+      startScript();
+    }
   }
 
   void updateRootPathServer(String value) {
@@ -105,16 +126,77 @@ class ServerController extends GetxController with LogMixin {
     }
   }
 
-  void run() {
+  Future<void> startServer() async {
     clearLog();
     shell!.kill();
-    runShell('echo OAS working directory: ').then((value) => null);
-    runShell('pwd').then((value) => null);
-    // runShell('(type env:path) -split ; ').then((value) => null);
-    runShell('python -m deploy.installer').then((value) => null);
-    runShell('echo Start OAS').then((value) => null);
-    runShell('taskkill /f /t /im pythonw.exe').then((value) => null);
-    runShell(".\\toolkit\\pythonw.exe  server.py").then((value) => null);
+    [
+      'echo OAS working directory: ',
+      'pwd',
+      'taskkill /f /t /im pythonw.exe',
+      'python -m deploy.installer',
+      'echo Start OAS',
+      r'.\toolkit\pythonw.exe server.py',
+    ].forEach(runShell);
+  }
+
+  Future<void> startScript() async {
+    final runScriptList =
+        YamlUtils.getValueFromString(deployContent.value, "Deploy.Webui.Run");
+    List<String> scriptNameList =
+        (runScriptList as List?)?.map((e) => e.toString()).toList() ?? [];
+    if (scriptNameList.isEmpty) {
+      Get.snackbar(I18n.tip.tr, I18n.not_detect_run_config.tr,
+          duration: const Duration(seconds: 2));
+      return;
+    }
+    Get.snackbar(I18n.detected_run_config_help.tr, scriptNameList.toString(),
+        duration: const Duration(seconds: 4));
+
+    final serverStarted = await checkServerStarted();
+    if (!serverStarted) {
+      return;
+    }
+
+    for (final scriptName in scriptNameList) {
+      addLog('INFO: start $scriptName');
+      await WebSocketManager.instance
+          .connect(name: scriptName, force: true)
+          .send("start");
+    }
+
+    final loginMap = {
+      'username': GetStorage().read(StorageKey.username.name),
+      'password': GetStorage().read(StorageKey.password.name),
+      'address': GetStorage().read(StorageKey.address.name),
+    };
+    LoginController.toMain(data: loginMap);
+  }
+
+  /// 检查oas服务是否启动成功(暂定)
+  /// 连续检查, 若成功连接maxRetries次则成功, 否则失败
+  Future<bool> checkServerStarted(
+      {int maxRetries = 5, int minWaitSeconds = 1}) async {
+    int failCnt = 0, successCnt = 0, allCnt = 0, waitSeconds = minWaitSeconds;
+    while (failCnt < maxRetries && successCnt < maxRetries) {
+      await LoginController.login(showSnackBar: false);
+      if (LoginController.logged) {
+        successCnt++;
+        failCnt = 0;
+        // 成功一次等待时间-3s, 最低minWaitSeconds
+        waitSeconds = max(minWaitSeconds, waitSeconds - 3);
+        addLog(
+            "INFO: [${++allCnt}]Success to connect server, remain valid times[${maxRetries - successCnt}], please wait for a moment${'. ' * 6}");
+      } else {
+        failCnt++;
+        successCnt = 0;
+        // 失败一次等待时间+3s
+        waitSeconds += 3;
+        addLog(
+            "INFO: [${++allCnt}]Fail to connect server, remain try times[${maxRetries - failCnt}], please wait for a moment${'. ' * 6}");
+      }
+      await Future.delayed(Duration(seconds: waitSeconds));
+    }
+    return successCnt == maxRetries;
   }
 
   void readDeploy() {

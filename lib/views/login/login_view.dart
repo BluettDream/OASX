@@ -1,8 +1,10 @@
 library login;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:oasx/comom/storage_key.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -10,6 +12,9 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/views/layout/appbar.dart';
 import 'package:oasx/utils/platform_utils.dart';
+
+import '../../comom/i18n_content.dart';
+import '../../controller/settings.dart';
 
 part './login_binding.dart';
 part '../../controller/login/login_controller.dart';
@@ -115,13 +120,12 @@ class LoginView extends StatelessWidget {
   }
 
   Widget _signin() {
-    LoginController loginController = Get.find<LoginController>();
     return ElevatedButton(
       onPressed: () async => {
         if (_formKey.currentState?.saveAndValidate() ?? false)
-          {await loginController.toMain(data: _formKey.currentState!.value)}
+          {await LoginController.toMain(data: _formKey.currentState!.value)}
       },
-      child: const Text('Login'),
+      child: Text(I18n.login.tr),
     ).padding(horizontal: 20, top: 40);
   }
 

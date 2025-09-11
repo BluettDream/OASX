@@ -6,6 +6,9 @@ final Map<String, String> _cn_ui = {
   I18n.en_us: 'English',
   I18n.change_theme: '切换主题',
   I18n.change_language: '切换语言',
+  I18n.auto_start_server: '自动启动服务',
+  I18n.auto_start_script: '自动运行脚本',
+  I18n.auto_start_script_help: '自动启动deploy.yaml中Webui.Run配置的脚本',
   I18n.project_statement: '开源软件',
   I18n.year: '年',
   I18n.month: '月',
@@ -65,6 +68,8 @@ final Map<String, String> _cn_ui = {
   I18n.install_oas_help: '这将会从Github上下载并解压，请保持网络稳定，同时将会清空该目录',
   I18n.setup_deploy: '服务启动配置',
   I18n.setup_log: '服务启动日志',
+  I18n.not_detect_run_config: '没有检测到需要运行的脚本',
+  I18n.detected_run_config_help: '检测到需要运行的脚本,将会在服务启动后自动运行',
   I18n.execute_update: '手动更新',
   I18n.go_oasx_release: '点击下载',
   I18n.tip: '提示',
@@ -129,7 +134,7 @@ final Map<String, String> _cn_menu = {
 
 final Map<String, String> _cn_script = {
   I18n.device: '模拟器设置',
-  I18n.error: '出错设置',
+  I18n.error: '错误',
   I18n.optimization: '优化设置',
   I18n.serial: '模拟器 Serial',
   I18n.serial_help: '''常见的模拟器 Serial 可以查询下方列表

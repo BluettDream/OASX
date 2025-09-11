@@ -20,6 +20,8 @@ final Map<String, String> _us_ui = {
   I18n.root_path_server_help:
   'OASX and OAS are two different things. Do not confuse them, do not put them in the same directory, do not use spaces, do not use Chinese characters, and do not use overly long paths',
   I18n.install_oas_help: 'This will download and decompress from Github. Please maintain a stable network connection. At the same time, this directory will be cleared',
+  I18n.auto_start_script_help: 'Automatically start the script configured in Webui.Run in deploy.yaml',
+  I18n.detected_run_config_help: 'Some script was detected that needs to be run, it will run automatically after the server started',
 };
 
 final Map<String, String> _us_script = {

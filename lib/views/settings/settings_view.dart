@@ -38,6 +38,37 @@ class SettingsView extends StatelessWidget {
       _DarkMode(onPressed: controllerSetting.updateTheme).paddingAll(5),
       Text(I18n.change_language.tr).paddingAll(5),
       const LanguageToggleButtons().paddingAll(5),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(I18n.auto_start_server.tr)
+              .padding(top: 5, bottom: 5, left: 5, right: 5),
+          Obx(() {
+            return Switch(
+                value: controllerSetting.autoStartServer.value,
+                onChanged: (nv) =>
+                    controllerSetting.autoStartServer.value = nv);
+          })
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(I18n.auto_start_script.tr).padding(top: 5, bottom: 5, left: 5),
+          Tooltip(
+              message: I18n.auto_start_script_help.tr,
+              child: const Icon(
+                Icons.help_outline,
+                size: 15,
+              )).paddingOnly(right: 5),
+          Obx(() {
+            return Switch(
+                value: controllerSetting.autoStartScript.value,
+                onChanged: (nv) =>
+                    controllerSetting.autoStartScript.value = nv);
+          })
+        ],
+      ),
       killServerButton(),
       _exitButton(),
     ].toColumn().alignment(Alignment.center));
@@ -45,8 +76,7 @@ class SettingsView extends StatelessWidget {
 
   Widget _exitButton() {
     return TextButton(
-            onPressed: () => {Get.offAllNamed('/login')},
-            child: Text('Log out'.tr))
+            onPressed: () => {Get.toNamed('/login')}, child: Text(I18n.log_out.tr))
         .constrained(minWidth: 180);
   }
 
@@ -57,11 +87,10 @@ class SettingsView extends StatelessWidget {
                     title: I18n.are_you_sure_kill.tr,
                     onCancel: () => {},
                     onConfirm: () => {
-                      // bool result = false;
                       ApiClient().killServer().then((value) {
                         if (value) {
                           Get.snackbar(I18n.kill_server_success.tr, '');
-                          Get.offAllNamed('/login');
+                          Get.toNamed('/login');
                         } else {
                           Get.snackbar(I18n.kill_server_failure.tr, '');
                         }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:oasx/comom/storage_key.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:chinese_font_library/chinese_font_library.dart';
 
@@ -24,6 +25,8 @@ class SettingsController extends GetxController {
   final _color = ColorSeed.baseColor.color.obs;
   final _dark = false.obs;
   final language = 'zh-CN'.obs;
+  final autoStartServer = false.obs;
+  final autoStartScript = false.obs;
 
   GetStorage storage = GetStorage();
   late String temporaryDirectory;
@@ -51,6 +54,15 @@ class SettingsController extends GetxController {
       default:
         updateLanguge(0);
     }
+
+    autoStartServer.value = storage.read(StorageKey.autoStartServer.name) ?? autoStartServer.value;
+    autoStartScript.value = storage.read(StorageKey.autoStartScript.name) ?? autoStartScript.value;
+    autoStartServer.listen((auto){
+      storage.write(StorageKey.autoStartServer.name, auto);
+    });
+    autoStartScript.listen((auto){
+      storage.write(StorageKey.autoStartScript.name, auto);
+    });
     super.onInit();
   }
 
