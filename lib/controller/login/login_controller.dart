@@ -1,7 +1,7 @@
 part of login;
 
 class LoginController extends GetxController {
-  static bool logined = false;
+  static bool logged = false;
   var username = ''.obs;
   var password = ''.obs;
   var address = ''.obs;
@@ -10,33 +10,61 @@ class LoginController extends GetxController {
 
   @override
   Future<void> onInit() async {
-    username.value = storage.read('username') ?? "";
-    password.value = storage.read('password') ?? "";
-    address.value = storage.read('address') ?? "";
-
-    if (address.value.isNotEmpty && !logined) {
-      logined = true;
-      await login(address.value);
-    }
+    username.value = storage.read(StorageKey.username.name) ?? "";
+    password.value = storage.read(StorageKey.password.name) ?? "";
+    address.value = storage.read(StorageKey.address.name) ?? "";
     super.onInit();
   }
 
-  /// 进入主页面
-  Future<void> toMain({required Map<String, dynamic> data}) async {
-    storage.write('username', data['username']);
-    storage.write('password', data['password']);
-    storage.write('address', data['address']);
-    printInfo(info: data.toString());
-    await login(data['address']);
+  @override
+  void onReady() {
+    super.onReady();
+    final autoStartServer =
+        storage.read(StorageKey.autoStartServer.name) ?? false;
+    final autoStartScript =
+        storage.read(StorageKey.autoStartScript.name) ?? false;
+    // 开启了自动启动服务或脚本并且没有登录过则前往server页面自动启动
+    if ((autoStartServer || autoStartScript) && !logged) {
+      // 延迟执行导航，以确保路由栈准备就绪
+      Future.delayed(Duration.zero, () async {
+        await Get.toNamed("/server");
+      });
+    } else if (address.value.isNotEmpty && !logged) {
+      Future.delayed(Duration.zero, () async {
+        await login();
+      });
+    }
   }
 
-  Future<void> login(String address) async {
-    ApiClient().setAddress('http://$address');
+  /// 进入主页面
+  static Future<void> toMain({required Map<String, dynamic> data}) async {
+    GetStorage().write('username', data['username']);
+    GetStorage().write('password', data['password']);
+    GetStorage().write('address', data['address']);
+    if (kDebugMode) {
+      print(data.toString());
+    }
+    await login();
+    if (logged) {
+      Get.offAllNamed("/main");
+    }
+  }
+
+  static Future<void> login({bool showSnackBar = true}) async {
+    final storageAddress =
+        (GetStorage().read(StorageKey.address.name) as String?) ?? '';
+    if (storageAddress.isEmpty) {
+      logged = false;
+      return;
+    }
+    ApiClient().setAddress('http://$storageAddress');
     if (await ApiClient().testAddress()) {
-      // Get.snackbar('Success', 'Successfully connected to OAS server');
-      Get.offAllNamed('/main');
+      logged = true;
     } else {
-      Get.snackbar('Error', 'Failed to connect to OAS server');
+      if (showSnackBar) {
+        Get.snackbar(I18n.error.tr, 'Failed to connect to OAS server');
+      }
+      logged = false;
     }
   }
 }

@@ -47,22 +47,6 @@ bool compareVersion(String current, String last) {
 
 Future<String> getCurrentVersion() async {
   if (kReleaseMode) {
-    // String result = '';
-    // if (Platform.isWindows) {
-    //   try {
-    //     rootBundle.loadString('assets/version.txt').then((value) {
-    //       value = value.replaceAll('\r', '');
-    //       value = value.replaceAll('\n', '');
-    //       value = value.replaceAll('v', '');
-    //       value = value.replaceAll('V', '');
-    //       result = value;
-    //     });
-    //   } on Exception {
-    //     result = 'v0.0.1';
-    //   }
-    //   return result;
-    // }
-    // return 'v0.0.1';
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     return 'v${packageInfo.version}';
   }

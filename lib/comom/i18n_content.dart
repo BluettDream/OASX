@@ -7,6 +7,9 @@ class I18n {
   static const String en_us = 'en-US';
   static const String change_theme = 'Change Theme';
   static const String change_language = 'Change Language';
+  static const String auto_start_server = 'Auto Start Server';
+  static const String auto_start_script = 'Auto Start Script';
+  static const String auto_start_script_help = 'Auto start script help';
   static const String project_statement = 'Project Statement';
   static const String year = 'Years';
   static const String month = 'Months';
@@ -82,6 +85,8 @@ class I18n {
   static const String config_add = 'Add new config';
   static const String config_copy_from_exist = 'Copy from existing config';
   static const String setting_saved = 'Setting saved';
+  static const String not_detect_run_config = 'Not detect run config';
+  static const String detected_run_config_help = 'Detected run config help';
 
   // 菜单项相关
   static const String overview = 'Overview';
