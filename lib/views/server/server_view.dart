@@ -1,11 +1,18 @@
 library server;
 
+import 'dart:convert';
+
 import 'package:expansion_tile_group/expansion_tile_group.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:oasx/comom/storage_key.dart';
 import 'package:oasx/component/log/log_mixin.dart';
 import 'package:oasx/component/log/log_widget.dart';
+import 'package:oasx/service/websocket_service.dart';
+import 'package:oasx/utils/extension_utils.dart';
+import 'package:oasx/utils/yaml_utils.dart';
 import 'package:process_run/shell.dart';
 import 'dart:io';
 import 'package:styled_widget/styled_widget.dart';
@@ -15,6 +22,9 @@ import 'package:oasx/comom/i18n_content.dart';
 import 'package:oasx/views/layout/appbar.dart';
 import 'package:oasx/controller/settings.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:yaml/yaml.dart';
+
+import '../../api/api_client.dart';
 
 part './deploy_view.dart';
 part '../../controller/server/server_controller.dart';
@@ -135,7 +145,7 @@ class ServerView extends StatelessWidget {
         return FloatingActionButton(
             child: const Icon(Icons.auto_mode_rounded),
             onPressed: () {
-              controller.run();
+              controller.startServer();
             });
       } else {
         return const SizedBox(

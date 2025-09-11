@@ -7,6 +7,9 @@ class I18n {
   static const String en_us = 'en-US';
   static const String change_theme = 'Change Theme';
   static const String change_language = 'Change Language';
+  static const String auto_start_server = 'Auto Start Server';
+  static const String auto_start_script = 'Auto Start Script';
+  static const String auto_start_script_help = 'Auto start script help';
   static const String project_statement = 'Project Statement';
   static const String year = 'Years';
   static const String month = 'Months';

@@ -38,14 +38,41 @@ class SettingsView extends StatelessWidget {
       _DarkMode(onPressed: controllerSetting.updateTheme).paddingAll(5),
       Text(I18n.change_language.tr).paddingAll(5),
       const LanguageToggleButtons().paddingAll(5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(I18n.auto_start_server.tr).padding(top: 5, bottom: 5, left: 5, right: 5),
+              Obx(() {
+                return Switch(
+                    value: controllerSetting.autoStartServer.value,
+                    onChanged: (nv) =>
+                    controllerSetting.autoStartServer.value = nv);
+              })
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(I18n.auto_start_script.tr).padding(top: 5, bottom: 5, left: 5),
+
+              Tooltip(message: I18n.auto_start_script_help.tr, child: const Icon(Icons.help_outline, size: 15,)).paddingOnly(right: 5),
+              Obx(() {
+                return Switch(
+                    value: controllerSetting.autoStartScript.value,
+                    onChanged: (nv) =>
+                    controllerSetting.autoStartScript.value = nv);
+              })
+            ],
+          ),
       killServerButton(),
       _exitButton(),
+
     ].toColumn().alignment(Alignment.center));
   }
 
   Widget _exitButton() {
     return TextButton(
-            onPressed: () => {Get.offAllNamed('/login')},
+            onPressed: () => {Get.toNamed('/login')},
             child: Text('Log out'.tr))
         .constrained(minWidth: 180);
   }
