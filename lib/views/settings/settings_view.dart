@@ -88,7 +88,7 @@ class SettingsView extends StatelessWidget {
                       ApiClient().killServer().then((value) {
                         if (value) {
                           Get.snackbar(I18n.kill_server_success.tr, '');
-                          Get.offAllNamed('/login');
+                          Get.toNamed('/login');
                         } else {
                           Get.snackbar(I18n.kill_server_failure.tr, '');
                         }
