@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:oasx/service/websocket_service.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:get/get.dart';
 import 'package:window_manager/window_manager.dart';
@@ -33,6 +34,9 @@ void main() async {
       await windowManager.focus();
     });
   }
+
+  // register global WebSocketManager
+  await Get.putAsync(() => WebSocketManager().init());
 
   runApp(
     DevicePreview(

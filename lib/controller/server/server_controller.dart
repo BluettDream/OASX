@@ -12,8 +12,9 @@ class ServerController extends GetxController with LogMixin {
 
   @override
   void onInit() {
+    final storage = Get.find<SettingsController>().storage;
     rootPathServer.value =
-        Get.find<SettingsController>().storage.read('rootPathServer') ??
+        storage.read(StorageKey.rootPathServer.name) ??
             'Please set OAS root path';
     shell = getShell;
     shellController.stream.listen((event) {
@@ -24,6 +25,25 @@ class ServerController extends GetxController with LogMixin {
       readDeploy();
     }
     super.onInit();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    if (!rootPathAuthenticated.value) {
+      return;
+    }
+    final storage = Get.find<SettingsController>().storage;
+    bool autoStartServer =
+        (storage.read(StorageKey.autoStartServer.name) as bool?) ?? false;
+    bool autoStartScript =
+        (storage.read(StorageKey.autoStartScript.name) as bool?) ?? false;
+    if (autoStartServer) {
+      startServer();
+    }
+    if (autoStartScript) {
+      startScript();
+    }
   }
 
   void updateRootPathServer(String value) {
@@ -105,16 +125,60 @@ class ServerController extends GetxController with LogMixin {
     }
   }
 
-  void run() {
+  Future<void> startServer() async {
     clearLog();
     shell!.kill();
-    runShell('echo OAS working directory: ').then((value) => null);
-    runShell('pwd').then((value) => null);
-    // runShell('(type env:path) -split ; ').then((value) => null);
-    runShell('python -m deploy.installer').then((value) => null);
-    runShell('echo Start OAS').then((value) => null);
-    runShell('taskkill /f /t /im pythonw.exe').then((value) => null);
-    runShell(".\\toolkit\\pythonw.exe  server.py").then((value) => null);
+    [
+      'echo OAS working directory: ',
+      'pwd',
+      'taskkill /f /t /im pythonw.exe',
+      'python -m deploy.installer',
+      'echo Start OAS',
+      r'.\toolkit\pythonw.exe server.py',
+    ].forEach(runShell);
+  }
+
+  Future<void> startScript() async {
+    List<String> scriptList =
+        (YamlUtils.getValueFromString(deployContent.value, "Deploy.Webui.Run")
+                    as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+    if (scriptList.isEmpty) {
+      return;
+    }
+
+    var logTitle = "INFO: ${'═' * 15} DETECTED WEBUI RUN ARGS ${'═' * 15}";
+    addLog(logTitle);
+    addLog(
+        "INFO: The following script will start automatically after 10 seconds+: ${scriptList.toString()}");
+    addLog("INFO: ${'═' * (logTitle.length - 11)}");
+
+    const maxRetries = 5;
+    var ready = false;
+    await Future.delayed(const Duration(seconds: 5));
+    for (int i = 0; i < maxRetries; i++) {
+      await Future.delayed(const Duration(seconds: 5));
+      bool ready = await ApiClient().testAddress();
+      if (ready) {
+        addLog("INFO: server is ready after ${i + 1} attempt(s).");
+        break;
+      }
+      addLog("INFO: server not ready yet, retrying... (${i + 1}/$maxRetries)");
+
+    }
+    if (!ready) {
+      addLog("ERROR: server not ready after ${maxRetries * 2} seconds.");
+    }
+
+    for (final scriptName in scriptList) {
+      addLog('INFO: start $scriptName');
+      await WebSocketManager.instance
+          .connect(name: scriptName, force: true)
+          .send("start");
+    }
+    Get.toNamed("/main");
   }
 
   void readDeploy() {
