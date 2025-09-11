@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/service/websocket_service.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:oasx/views/args/args_view.dart';
 import 'package:styled_widget/styled_widget.dart';
@@ -263,7 +264,7 @@ class Nav extends StatelessWidget {
             duration: const Duration(milliseconds: 2000));
         return false;
       }
-      await overviewController.wsClose(WebSocketStatus.normalClosure, reason);
+      await WebSocketManager.instance.close(scriptName);
     } catch (e) {
       // overviewController not found is safe to operate
       if (e.toString().contains('not found')) {
