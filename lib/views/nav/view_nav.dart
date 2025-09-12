@@ -270,7 +270,8 @@ class Nav extends StatelessWidget {
             duration: const Duration(milliseconds: 2000));
         return false;
       }
-      await overviewController.wsClose(WebSocketStatus.normalClosure, reason);
+      final wsService = Get.find<WebSocketService>();
+      await wsService.close(scriptName);
     } catch (e) {
       // overviewController not found is safe to operate
       if (e.toString().contains('not found')) {
