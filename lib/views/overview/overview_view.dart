@@ -48,13 +48,6 @@ class Overview extends StatelessWidget {
           _running(context, overviewController),
           _pendings(context, overviewController),
           _waitings(context, overviewController).constrained(maxHeight: 200),
-          LogWidget(
-                  key: ValueKey(overviewController.hashCode),
-                  controller: overviewController,
-                  title: I18n.log.tr,
-                  enableCollapse: false)
-              .constrained(maxHeight: 500)
-              .marginOnly(left: 10, top: 10, right: 10),
           Obx(() {
             return LogWidget(
                     key: ValueKey(overviewController.hashCode),
@@ -91,14 +84,7 @@ class Overview extends StatelessWidget {
                   ? TaskDashboardWidget(controllerTag: scriptName)
                       .width(MediaQuery.of(context).size.width)
                   : null);
-        }).marginOnly(right: 10).expanded()
-        LogWidget(
-                key: ValueKey(overviewController.hashCode),
-                controller: overviewController,
-                title: I18n.log.tr,
-                enableCollapse: false)
-            .marginOnly(right: 10)
-            .expanded()
+        }).marginOnly(right: 10).expanded(),
       ].toRow();
     }
   }

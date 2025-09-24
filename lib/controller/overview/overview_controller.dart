@@ -111,7 +111,7 @@ class OverviewController extends GetxController with LogMixin {
   final battleReg = '^─.*GENERAL BATTLE START';
 
   void parseLog(String log) {
-    final runningTaskName = running.value.taskName;
+    final runningTaskName = scriptModel.runningTask.value.taskName;
     if (runningTaskName.isEmpty) return;
     final taskNameUpperReg = '^─.*${runningTaskName.toUpperCase()}';
     // 非战斗型任务根据任务名称匹配
