@@ -84,6 +84,11 @@ class I18n {
   static const String setting_saved = 'Setting saved';
   static const String auto_start_script = 'Auto start script';
   static const String auto_start_script_help = 'Auto start script help';
+  static const String now = 'now';
+  static const String seconds_ago = 'seconds ago';
+  static const String minutes_ago = 'minutes ago';
+  static const String hours_ago = 'hours_ago';
+  static const String days_ago = 'days_ago';
 
   // 菜单项相关
   static const String overview = 'Overview';

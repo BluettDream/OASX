@@ -17,6 +17,7 @@ class OverviewController extends GetxController with LogMixin {
   final pendings = <TaskItemModel>[].obs;
   final waitings = const <TaskItemModel>[].obs;
   final wsService = Get.find<WebSocketService>();
+  late final tdController = Get.find<TaskDashboardController>(tag: name);
 
   @override
   int get maxLines => 300;
@@ -38,6 +39,9 @@ class OverviewController extends GetxController with LogMixin {
       name,
       reason: "script $name normal close",
     );
+    if(Get.isRegistered<TaskDashboardController>(tag: name)){
+      Get.delete<TaskDashboardController>(tag: name, force: true);
+    }
     super.onClose();
   }
 
@@ -59,6 +63,7 @@ class OverviewController extends GetxController with LogMixin {
     }
     if (!message.startsWith('{') || !message.endsWith('}')) {
       addLog(message);
+      parseLog(message);
       return;
     }
     Map<String, dynamic> data = json.decode(message);
@@ -91,6 +96,45 @@ class OverviewController extends GetxController with LogMixin {
       waitings.value = [];
       for (var element in waiting) {
         waitings.add(TaskItemModel(element['name'], element['next_run']));
+      }
+    }
+  }
+
+  final onlyBattleRegList = [
+    'Orochi', //八岐大蛇
+    'RealmRaid', //突破
+    'RyouToppa', //寮突
+    'BondlingFairyland', //契灵
+    'ActivityShikigami', //爬塔
+    'EvoZone', //觉醒
+    'Exploration', //探索
+    'FallenSun', // 日轮
+    'GoryouRealm', //御灵
+    'sougenbi', //业原火
+    'EternitySea', //永生之海
+    'areaBoss', // 地鬼
+    'dye_trials', //灵柒
+  ].map((e) => e.toUpperCase()).toList(growable: false);
+
+  final battleReg = '^─.*GENERAL BATTLE START';
+
+  void parseLog(String log) {
+    final runningTaskName = running.value.taskName;
+    if (runningTaskName.isEmpty) return;
+    final taskNameUpperReg = '^─.*${runningTaskName.toUpperCase()}';
+    // 非战斗型任务根据任务名称匹配
+    // 战斗型任务根据通用战斗匹配
+    if ((log.contains(RegExp(taskNameUpperReg)) &&
+            !onlyBattleRegList.contains(runningTaskName.toUpperCase())) ||
+        (log.contains(RegExp(battleReg)) &&
+            onlyBattleRegList.contains(runningTaskName.toUpperCase()))) {
+      final taskCardState = tdController.findByName(runningTaskName);
+      if (taskCardState != null) {
+        taskCardState.count.value++;
+        tdController.updateTaskCard(taskCardState);
+      } else {
+        tdController
+            .addTaskCard(TaskCardState(name: runningTaskName, count: 1));
       }
     }
   }

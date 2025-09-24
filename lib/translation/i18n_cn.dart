@@ -85,7 +85,12 @@ final Map<String, String> _cn_ui = {
   I18n.config_copy_from_exist: '复制已有配置',
   I18n.setting_saved: '设置已保存',
   I18n.auto_start_script: '自动启动脚本',
-  I18n.auto_start_script_help: '自动登录时自动运行deploy.yaml中Webui.Run配置的脚本'
+  I18n.auto_start_script_help: '自动登录时自动运行deploy.yaml中Webui.Run配置的脚本',
+  I18n.now: '现在',
+  I18n.seconds_ago: '秒前',
+  I18n.minutes_ago: '分钟前',
+  I18n.hours_ago: '小时前',
+  I18n.days_ago: '天前',
 };
 
 final Map<String, String> _cn_menu = {
