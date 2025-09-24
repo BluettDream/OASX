@@ -22,6 +22,7 @@ final Map<String, String> _us_ui = {
   I18n.install_oas_help: 'This will download and decompress from Github. Please maintain a stable network connection. At the same time, this directory will be cleared',
   I18n.config_update_tip: 'The current script is running, please stop it before making modifications.',
   I18n.auto_start_script_help: 'Automatically run the script configured in Webui.Run in deploy.yaml when logging in',
+  I18n.minimize_to_system_tray_help: 'Minimized to the system tray when closing a window',
 };
 
 final Map<String, String> _us_script = {

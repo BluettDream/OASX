@@ -91,6 +91,14 @@ final Map<String, String> _cn_ui = {
   I18n.minutes_ago: '分钟前',
   I18n.hours_ago: '小时前',
   I18n.days_ago: '天前',
+  I18n.auto_start_script_help: '自动登录时自动运行deploy.yaml中Webui.Run配置的脚本',
+  I18n.remember_window_position_size: '记住窗口位置和大小',
+  I18n.showWindow: '显示窗口',
+  I18n.exit: '退出',
+  I18n.minimize_to_system_tray: '是否最小化到系统托盘',
+  I18n.remember_my_choice: '记住我的选择',
+  I18n.script_list: '脚本列表',
+  I18n.minimize_to_system_tray_help: '关闭窗口时最小化到系统托盘',
 };
 
 final Map<String, String> _cn_menu = {

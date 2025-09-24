@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/model/const/storage_key.dart';
+import 'package:oasx/model/script_model.dart';
 import 'package:oasx/service/websocket_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
@@ -11,6 +12,7 @@ class ScriptService extends GetxService {
   final _storage = GetStorage();
   final autoStartScript = false.obs;
   List<String> _autoStartScriptList = [];
+  final scriptModelMap = <String, ScriptModel>{}.obs;
 
   @override
   void onInit() {
@@ -20,6 +22,32 @@ class ScriptService extends GetxService {
     _autoStartScriptList =
         ret is List ? ret.map((e) => e.toString()).toList() : [];
     super.onInit();
+  }
+
+  void addScriptModel(ScriptModel sm) {
+    if (scriptModelMap.containsKey(sm.name)) return;
+    scriptModelMap[sm.name] = sm;
+  }
+
+  void updateScriptModel(ScriptModel sm) {
+    if (!scriptModelMap.containsKey(sm.name)) return;
+    scriptModelMap[sm.name] = sm;
+  }
+
+  void addOrUpdateScriptModel(ScriptModel sm) {
+    if (scriptModelMap.containsKey(sm.name)) {
+      updateScriptModel(sm);
+    } else {
+      addScriptModel(sm);
+    }
+  }
+
+  void deleteScriptModel(String name) {
+    scriptModelMap.removeWhere((k, v) => k == name);
+  }
+
+  ScriptModel? findScriptModel(String name) {
+    return scriptModelMap[name];
   }
 
   void updateAutoScript(bool value) {

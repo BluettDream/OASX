@@ -89,6 +89,13 @@ class I18n {
   static const String minutes_ago = 'minutes ago';
   static const String hours_ago = 'hours_ago';
   static const String days_ago = 'days_ago';
+  static const String remember_window_position_size = 'Remember window positon and size';
+  static const String showWindow = 'Show window';
+  static const String exit = 'Exit';
+  static const String minimize_to_system_tray = 'Minimize to system tray';
+  static const String remember_my_choice = 'Remember my choice';
+  static const String script_list = 'Script list';
+  static const String minimize_to_system_tray_help = 'Minimize to system tray help';
 
   // 菜单项相关
   static const String overview = 'Overview';
