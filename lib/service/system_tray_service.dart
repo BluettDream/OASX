@@ -31,6 +31,7 @@ class SystemTrayService extends GetxService {
         await windowManager.focus();
         await hideTray();
       } else if (eventName == kSystemTrayEventRightClick) { // 右键打开菜单
+        await _rebuildMenu();
         Platform.isWindows ? _systemTray.popUpContextMenu() : _appWindow.show();
       }
     });
