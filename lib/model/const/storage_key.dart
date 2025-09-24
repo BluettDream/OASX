@@ -3,4 +3,7 @@ enum StorageKey{
   autoStartScriptList,
   dark,
   language,
+  windowState,
+  enableWindowState,
+  enableSystemTray,
 }

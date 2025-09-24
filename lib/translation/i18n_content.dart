@@ -84,6 +84,7 @@ class I18n {
   static const String setting_saved = 'Setting saved';
   static const String auto_start_script = 'Auto start script';
   static const String auto_start_script_help = 'Auto start script help';
+  static const String remember_window_position_size = 'Remember window positon and size';
 
   // 菜单项相关
   static const String overview = 'Overview';
