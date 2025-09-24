@@ -25,6 +25,7 @@ class SettingsView extends StatelessWidget {
             const _LanguageWidget().paddingAll(5),
             const _ScriptWidget().paddingAll(5),
             if(PlatformUtils.isDesktop) const _WindowStateWidget().paddingAll(5),
+            if(PlatformUtils.isDesktop) const _MinimizeToTrayWidget().paddingAll(5),
             killServerButton(),
             _exitButton(),
           ].toColumn().alignment(Alignment.center)),
@@ -62,6 +63,28 @@ class SettingsView extends StatelessWidget {
   }
 }
 
+class _MinimizeToTrayWidget extends StatelessWidget {
+  const _MinimizeToTrayWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return <Widget>[
+      Text(I18n.minimize_to_system_tray.tr).padding(top: 5, bottom: 5, left: 5),
+      Tooltip(
+          message: I18n.minimize_to_system_tray_help.tr,
+          child: const Icon(
+            Icons.help_outline,
+            size: 15,
+          )).paddingOnly(right: 5),
+      Obx(() {
+        return Switch(
+            value: Get.find<WindowService>().enableSystemTray.value,
+            onChanged: (nv) => Get.find<WindowService>().updateSystemTrayEnable(nv));
+      })
+    ].toRow(mainAxisAlignment: MainAxisAlignment.center);
+  }
+}
+
 class _WindowStateWidget extends StatelessWidget {
   const _WindowStateWidget();
 
@@ -72,7 +95,7 @@ class _WindowStateWidget extends StatelessWidget {
       Obx(() {
         return Switch(
             value: Get.find<WindowService>().enableWindowState.value,
-            onChanged: (nv) => Get.find<WindowService>().toggleWindowStateEnable(nv));
+            onChanged: (nv) => Get.find<WindowService>().updateWindowStateEnable(nv));
       })
     ].toRow(mainAxisAlignment: MainAxisAlignment.center);
   }

@@ -7,7 +7,10 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oasx/model/const/storage_key.dart';
 import 'package:oasx/model/window_state.dart';
+import 'package:oasx/service/system_tray_service.dart';
+import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:styled_widget/styled_widget.dart';
 import 'package:window_manager/window_manager.dart';
 
 class WindowService extends GetxService with WindowListener {
@@ -16,11 +19,7 @@ class WindowService extends GetxService with WindowListener {
   Timer? _debounceTimer;
   DateTime? _lastSaveTime;
   final enableWindowState = false.obs;
-
-  bool get minimizeToTray =>
-      _storage.read(StorageKey.enableSystemTray.name) ?? false;
-  set minimizeToTray(bool value) =>
-      _storage.write(StorageKey.enableSystemTray.name, value);
+  final enableSystemTray = false.obs;
 
   Future<WindowService> init() async {
     if (!PlatformUtils.isDesktop) return this;
@@ -35,16 +34,17 @@ class WindowService extends GetxService with WindowListener {
         } catch (e) {
           printError(info: 'window state parsing failed：$jsonStr');
         }
-        if (lastState != null) {
-          await windowManager.setBounds(Rect.fromLTWH(
-            lastState.x,
-            lastState.y,
-            lastState.width,
-            lastState.height,
-          ));
-        }
       }
     }
+    if (lastState != null) {
+      await windowManager.setBounds(Rect.fromLTWH(
+        lastState.x,
+        lastState.y,
+        lastState.width,
+        lastState.height,
+      ));
+    }
+    await windowManager.setPreventClose(true);
     WindowOptions windowOptions = WindowOptions(
       size: (lastState != null)
           ? Size(lastState.width, lastState.height)
@@ -66,6 +66,8 @@ class WindowService extends GetxService with WindowListener {
   void onInit() {
     enableWindowState.value =
         _storage.read(StorageKey.enableWindowState.name) ?? false;
+    enableSystemTray.value =
+        _storage.read(StorageKey.enableSystemTray.name) ?? false;
     super.onInit();
   }
 
@@ -111,13 +113,17 @@ class WindowService extends GetxService with WindowListener {
   @override
   void onWindowClose() async {
     _debounceTimer?.cancel();
-    await _saveWindowState();
+    final preventClose = await windowManager.isPreventClose();
+    if (!preventClose) return;
 
-    if (minimizeToTray) {
+    // 检查是否已经设置了最小化到托盘的选项
+    if (enableSystemTray.value) {
+      await Get.find<SystemTrayService>().showTray();
       await windowManager.hide();
-    } else {
-      await windowManager.destroy();
+      return;
     }
+    await windowManager.setPreventClose(false);
+    await windowManager.close();
   }
 
   @override
@@ -129,8 +135,13 @@ class WindowService extends GetxService with WindowListener {
     super.onClose();
   }
 
-  void toggleWindowStateEnable(bool newVal) {
+  void updateWindowStateEnable(bool newVal) {
     enableWindowState.value = newVal;
     _storage.write(StorageKey.enableWindowState.name, newVal);
+  }
+
+  void updateSystemTrayEnable(bool newVal) {
+    enableSystemTray.value = newVal;
+    _storage.write(StorageKey.enableSystemTray.name, newVal);
   }
 }
