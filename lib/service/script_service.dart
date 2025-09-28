@@ -4,11 +4,11 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:oasx/api/api_client.dart';
 import 'package:oasx/component/dialog/progress_dialog.dart';
 import 'package:oasx/model/const/storage_key.dart';
 import 'package:oasx/model/script_model.dart';
 import 'package:oasx/service/websocket_service.dart';
-import 'package:oasx/utils/extension_utils.dart';
 import 'package:oasx/views/overview/overview_view.dart';
 import 'package:oasx/utils/time_utils.dart';
 
@@ -19,26 +19,50 @@ class ScriptService extends GetxService {
   final autoScriptList = <String>[].obs;
 
   @override
-  void onInit() {
+  Future<void> onInit() async {
+    final scriptList = await ApiClient().getScriptList();
+    if (scriptList.isNotEmpty) {
+      await Future.wait(scriptList.map((name) => connectScript(name)));
+    }
     autoScriptList.value =
         ((jsonDecode(_storage.read(StorageKey.autoScriptList.name)) as List?) ??
-                [])
+            [])
             .map((e) => e.toString())
             .toList();
-    ever(scriptModelMap, (_) {
-      autoScriptList.removeWhere((e) => !scriptModelMap.containsKey(e));
-    });
     super.onInit();
   }
 
-  Future<void> runScript(String name) async {
+  @override
+  Future<void> onReady() async {
+    await autoRunScript();
+    super.onReady();
+  }
+
+  @override
+  Future<void> onClose() async {
+    await Future.wait([
+      ...scriptModelMap.keys.map((e) => Future.wait([
+            stopScript(e),
+            wsService.close(e),
+            Get.delete<OverviewController>(tag: e, force: true)
+          ])),
+    ]);
+    scriptModelMap.clear();
+    super.onClose();
+  }
+
+  Future<void> connectScript(String name) async {
     if (!scriptModelMap.containsKey(name)) {
       addScriptModel(name);
     }
     wsService.removeAllListeners(name);
-    await wsService
-        .connect(name: name, listener: (mg) => wsListener(mg, name))
-        .send('start');
+    await wsService.connect(name: name, listener: (mg) => wsListener(mg, name));
+  }
+
+  Future<void> startScript(String name) async {
+    await connectScript(name);
+    await wsService.send(name, 'start');
+    await wsService.send(name, 'get_state');
   }
 
   void wsListener(dynamic message, String name) {
@@ -47,7 +71,9 @@ class ScriptService extends GetxService {
       return;
     }
     if (!message.startsWith('{') || !message.endsWith('}')) {
-      scriptModelMap[name]!.appendLog(message);
+      if (Get.isRegistered<OverviewController>(tag: name)) {
+        Get.find<OverviewController>(tag: name).addLog(message);
+      }
       return;
     }
     Map<String, dynamic> data = jsonDecode(message);
@@ -103,6 +129,7 @@ class ScriptService extends GetxService {
     if (!scriptModelMap.containsKey(name)) return;
     scriptModelMap.remove(name);
     wsService.close(name);
+    autoScriptList.removeWhere((e) => e == name);
   }
 
   ScriptModel? findScriptModel(String name) {
@@ -115,7 +142,7 @@ class ScriptService extends GetxService {
     }
     ProgressDialog.show('Auto-start script detected', autoScriptList);
     for (final scriptName in List.of(autoScriptList)) {
-      runScript(scriptName);
+      startScript(scriptName);
       double progress = 0.0;
       final success = await TimeoutUtils.runWithTimeout(
         period: const Duration(milliseconds: 100),
