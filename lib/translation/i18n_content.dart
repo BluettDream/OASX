@@ -82,6 +82,11 @@ class I18n {
   static const String config_add = 'Add new config';
   static const String config_copy_from_exist = 'Copy from existing config';
   static const String setting_saved = 'Setting saved';
+  static const String now = 'now';
+  static const String seconds_ago = 'seconds ago';
+  static const String minutes_ago = 'minutes ago';
+  static const String hours_ago = 'hours_ago';
+  static const String days_ago = 'days_ago';
 
   // 菜单项相关
   static const String overview = 'Overview';
