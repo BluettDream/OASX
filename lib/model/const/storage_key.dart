@@ -5,6 +5,7 @@ enum StorageKey {
   password,
   address,
   autoScriptList,
+  autoDeploy,
   windowState,
   enableWindowState,
   enableSystemTray,

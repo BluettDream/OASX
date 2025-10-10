@@ -92,6 +92,7 @@ final Map<String, String> _cn_ui = {
   I18n.showWindow: '显示窗口',
   I18n.exit: '退出',
   I18n.empty: '空',
+  I18n.auto_deploy: '自动部署oas',
 };
 
 final Map<String, String> _cn_menu = {

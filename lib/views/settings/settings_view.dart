@@ -24,6 +24,7 @@ class SettingsView extends StatelessWidget {
         const _ThemeWidget().paddingAll(5),
         const _LanguageWidget().paddingAll(5),
         const _AutoScriptWidget().paddingAll(5),
+        if(PlatformUtils.isDesktop) const _AutoDeployWidget().paddingAll(5),
         if (PlatformUtils.isDesktop) const _WindowStateWidget().paddingAll(5),
         if (PlatformUtils.isDesktop)
           const _MinimizeToTrayWidget().paddingAll(5),
@@ -52,6 +53,25 @@ class SettingsView extends StatelessWidget {
                 },
             child: Text(I18n.kill_oas_server.tr))
         .constrained(minWidth: 180);
+  }
+}
+
+class _AutoDeployWidget extends StatelessWidget {
+  const _AutoDeployWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsController = Get.find<SettingsController>();
+
+    return <Widget>[
+      Text(I18n.auto_deploy.tr).paddingOnly(bottom: 5),
+      Obx(() {
+        return Switch(
+          value: settingsController.autoDeploy.value,
+          onChanged: (nv) => settingsController.updateAutoDeploy(nv),
+        );
+      })
+    ].toColumn();
   }
 }
 
