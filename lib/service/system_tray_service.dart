@@ -103,6 +103,6 @@ class SystemTrayService extends GetxService {
     if (scriptModel.runningTask.value.isAllEmpty()) {
       return scriptModel.name;
     }
-    return '${scriptModel.name} - ${scriptModel.runningTask.value.taskName.tr}';
+    return '${scriptModel.name} - ${scriptModel.runningTask.value.taskName.value.tr}';
   }
 }
