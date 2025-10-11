@@ -92,6 +92,8 @@ final Map<String, String> _cn_ui = {
   I18n.showWindow: '显示窗口',
   I18n.exit: '退出',
   I18n.empty: '空',
+  I18n.auto_run_script: '自动启动脚本',
+  I18n.start_success: '启动成功',
   I18n.auto_deploy: '自动部署oas',
 };
 

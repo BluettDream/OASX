@@ -90,6 +90,8 @@ class I18n {
   static const String showWindow = 'Show window';
   static const String exit = 'Exit';
   static const String empty = 'Empty';
+  static const String auto_run_script = 'Auto run script';
+  static const String start_success = 'Start success';
   static const String auto_deploy = 'Auto deploy';
 
   // 菜单项相关
