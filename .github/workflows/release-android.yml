@@ -7,54 +7,80 @@ name: Build-Release[Android]
 jobs:
   release:
     runs-on: ubuntu-latest
-    # 配置环境
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      # 下拉仓库
       - name: Check out repository code
-        uses: actions/checkout@v3
-      # 下载 Flutter
+        uses: actions/checkout@v4
+
+      # 缓存 Flutter SDK
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.FLUTTER_HOME }}
+            /opt/hostedtoolcache/flutter
+          key: ${{ runner.os }}-flutter-3.27.1-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-3.27.1-
+            ${{ runner.os }}-flutter-
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.27.1'
           channel: 'stable'
-      # 下载 Java JDK
+          cache: true
+
       - name: Setup Java JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: "21"
-      - name: List files in the repository
-        run: |
-          echo '' > ${{ secrets.OASX_RELEASE }}
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
-      - run: flutter --version
-      - run: java -version
-      # 下载依赖
+          java-version: '21'
+          cache: 'gradle'
+
+      # 缓存 pub 依赖
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.PUB_CACHE }}
+            ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      # 缓存 Gradle
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Install dependencies
         run: flutter pub get
-      # 最新的发布url
+
+      # 获取最新 release 信息
       - name: Get latest release
         id: get_release
-        uses: actions/github-script@v4
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.RELEASE_TOKEN }}
           script: |
-            const { data: releases } = await github.repos.listReleases({
+            const { data: releases } = await github.rest.repos.listReleases({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
             const latestRelease = releases[0];
             const version = latestRelease.tag_name.replace(/^v/, '') + '+1'
-            console.log(JSON.stringify(latestRelease, null, 2));
             core.setOutput('upload_url', latestRelease.upload_url);
             core.setOutput('tag_name', latestRelease.tag_name);
             core.setOutput('version', version);
-      # 修改 yaml 版本号
+
+      # 修改版本号
       - name: Update version
         uses: fjogeleit/yaml-update-action@main
         with:
@@ -63,62 +89,63 @@ jobs:
           value: ${{ steps.get_release.outputs.version }}
           commitChange: false
 
-      # 构建通用胖 apk
-      - name: Build universal APK
-        run: flutter build apk --release
+      # 一次性构建所有 APK
+      - name: Build all APKs
+        run: |
+          flutter build apk --release &
+          PID1=$!
+          flutter build apk --release --split-per-abi &
+          PID2=$!
+          wait $PID1 $PID2
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # 构建分 abi apk
-      - name: Build split-per-abi APKs
-        run: flutter build apk --release --split-per-abi
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
-      # 上传通用胖 apk
-      - name: Upload universal APK
-        uses: actions/upload-release-asset@v1
+      # 批量上传所有 APK
+      - name: Upload all APKs
+        uses: actions/github-script@v7
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          UPLOAD_URL: ${{ steps.get_release.outputs.upload_url }}
+          TAG_NAME: ${{ steps.get_release.outputs.tag_name }}
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./build/app/outputs/flutter-apk/app-release.apk
-          asset_name: oasx_${{ steps.get_release.outputs.tag_name }}_universal.apk
-          asset_content_type: application/vnd.android.package-archive
+          github-token: ${{ secrets.RELEASE_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            const apks = [
+              { path: './build/app/outputs/flutter-apk/app-release.apk', name: 'universal' },
+              { path: './build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk', name: 'armeabi-v7a' },
+              { path: './build/app/outputs/flutter-apk/app-arm64-v8a-release.apk', name: 'arm64-v8a' },
+              { path: './build/app/outputs/flutter-apk/app-x86_64-release.apk', name: 'x86_64' }
+            ];
 
-      # 上传 armeabi-v7a apk
-      - name: Upload armeabi-v7a APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-          asset_name: oasx_${{ steps.get_release.outputs.tag_name }}_armeabi-v7a.apk
-          asset_content_type: application/vnd.android.package-archive
+            const uploadUrl = process.env.UPLOAD_URL;
+            const tagName = process.env.TAG_NAME;
 
-      # 上传 arm64-v8a apk
-      - name: Upload arm64-v8a APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-          asset_name: oasx_${{ steps.get_release.outputs.tag_name }}_arm64-v8a.apk
-          asset_content_type: application/vnd.android.package-archive
+            for (const apk of apks) {
+              if (!fs.existsSync(apk.path)) {
+                console.log(`APK not found: ${apk.path}`);
+                continue;
+              }
 
-      # 上传 x86_64 apk
-      - name: Upload x86_64 APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./build/app/outputs/flutter-apk/app-x86_64-release.apk
-          asset_name: oasx_${{ steps.get_release.outputs.tag_name }}_x86_64.apk
-          asset_content_type: application/vnd.android.package-archive
+              const assetName = `oasx_${tagName}_${apk.name}.apk`;
+              const stats = fs.statSync(apk.path);
+              const fileContent = fs.readFileSync(apk.path);
+
+              console.log(`Uploading ${assetName}...`);
+
+              await github.rest.repos.uploadReleaseAsset({
+                url: uploadUrl,
+                headers: {
+                  'content-type': 'application/vnd.android.package-archive',
+                  'content-length': stats.size
+                },
+                name: assetName,
+                data: fileContent
+              });
+
+              console.log(`Successfully uploaded ${assetName}`);
+            }
