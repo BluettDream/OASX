@@ -231,6 +231,33 @@ class ApiClient {
     return res.isSuccess && res.data;
   }
 
+  Future<bool> copyTask(
+      String taskName, String copyConfigName, String sourceConfigName) async {
+    final res = await request(() => put(
+          '/config/task/copy',
+          queryParameters: {
+            'task_name': taskName,
+            'dest_config_name': copyConfigName,
+            'source_config_name': sourceConfigName
+          },
+        ));
+    return res.isSuccess && res.data;
+  }
+
+  Future<bool> copyGroup(String taskName, String groupName,
+      String copyConfigName, String sourceConfigName) async {
+    final res = await request(() => put(
+          '/config/task/group/copy',
+          queryParameters: {
+            'task_name': taskName,
+            'group_name': groupName,
+            'dest_config_name': copyConfigName,
+            'source_config_name': sourceConfigName
+          },
+        ));
+    return res.isSuccess && res.data;
+  }
+
 // ---------------------------------   脚本实例管理   ----------------------------------
 
   Future<Map<String, dynamic>> getScriptTask(

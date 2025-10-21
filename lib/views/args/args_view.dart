@@ -7,8 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_pickers/pickers.dart';
 import 'package:flutter_pickers/style/default_style.dart';
 import 'package:get/get.dart';
+import 'package:oasx/service/theme_service.dart';
 import 'package:oasx/service/websocket_service.dart';
 import 'package:oasx/views/nav/view_nav.dart';
+import 'package:oasx/views/overview/overview_view.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'dart:convert';
 import 'package:expansion_tile_group/expansion_tile_group.dart';
@@ -23,40 +25,59 @@ part './date_time_picker.dart';
 part '../../controller/args/args_controller.dart';
 
 class Args extends StatelessWidget {
-  const Args({Key? key, this.scriptName, this.taskName}) : super(key: key);
+  const Args(
+      {Key? key, this.scriptName, this.taskName, this.groupDraggable = true})
+      : super(key: key);
   final String? scriptName;
   final String? taskName;
+  final bool groupDraggable;
 
   @override
   Widget build(BuildContext context) {
     return GetX<ArgsController>(builder: (controller) {
+      final navController = Get.find<NavCtrl>();
+      final selectedScript = navController.selectedScript.value;
+      final selectedTask = navController.selectedMenu.value;
       return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
               child: ExpansionTileGroup(
-                      spaceBetweenItem: 10, children: _childrenGroup(context))
+                      spaceBetweenItem: 10,
+                      children: controller.groupsName.value
+                          .map((name) => ExpansionTileItem(
+                                initiallyExpanded: true,
+                                isHasTopBorder: false,
+                                isHasBottomBorder: false,
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .secondaryContainer
+                                    .withValues(alpha: 0.24),
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(10)),
+                                title: <Widget>[
+                                  if (groupDraggable)
+                                    Draggable<Map<String, dynamic>>(
+                                      data: {
+                                        'model': TaskItemModel(
+                                            scriptName ?? selectedScript,
+                                            taskName ?? selectedTask,
+                                            '',
+                                            groupName: name),
+                                        'source': 'argsViewGroup'
+                                      },
+                                      feedback: _buildFeedback(context, name),
+                                      child: const Icon(
+                                          Icons.drag_indicator_outlined),
+                                    ),
+                                  Text(name.tr)
+                                ].toRow(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min),
+                                children: _children(name),
+                              ))
+                          .toList())
                   .constrained(maxWidth: 700, minWidth: 100))
           .alignment(Alignment.topCenter);
     });
-  }
-
-  List<ExpansionTileItem> _childrenGroup(BuildContext context) {
-    ArgsController controller = Get.find();
-    return controller.groupsName.value
-        .map((name) => ExpansionTileItem(
-              initiallyExpanded: true,
-              isHasTopBorder: false,
-              isHasBottomBorder: false,
-              // collapsedBorderColor: Theme.of(context).colorScheme.secondaryContainer,
-              // expendedBorderColor: Theme.of(context).colorScheme.outline,
-              backgroundColor: Theme.of(context)
-                  .colorScheme
-                  .secondaryContainer
-                  .withOpacity(0.24),
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-              title: Text(name.tr),
-              children: _children(name),
-            ))
-        .toList();
   }
 
   List<Widget> _children(String groupName) {
@@ -73,6 +94,31 @@ class Args extends StatelessWidget {
       ));
     }
     return result;
+  }
+
+  Widget _buildFeedback(BuildContext context, String title) {
+    final themeService = Get.find<ThemeService>();
+    return Material(
+      color: Colors.transparent,
+      child: Text(title.tr, style: Theme.of(context).textTheme.titleMedium)
+          .decorated(
+            color: themeService.isDarkMode
+                ? Colors.blueGrey.shade700
+                : Colors.blueGrey.shade100,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 6,
+                offset: Offset(2, 2),
+              ),
+            ],
+          )
+          .width(150)
+          .height(30)
+          .paddingAll(8)
+          .opacity(0.8),
+    );
   }
 }
 
