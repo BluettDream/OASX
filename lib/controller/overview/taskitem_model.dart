@@ -4,8 +4,9 @@ class TaskItemModel {
   final String scriptName;
   final taskName = ''.obs;
   final nextRun = ''.obs;
+  String? groupName;
 
-  TaskItemModel(this.scriptName, taskName, nextRun) {
+  TaskItemModel(this.scriptName, taskName, nextRun, {this.groupName = ''}) {
     this.taskName.value = taskName;
     this.nextRun.value = nextRun;
   }
@@ -23,9 +24,10 @@ class TaskItemModel {
       identical(this, other) ||
       other is TaskItemModel &&
           runtimeType == other.runtimeType &&
+          scriptName == other.scriptName &&
           taskName == other.taskName &&
           nextRun == other.nextRun;
 
   @override
-  int get hashCode => Object.hash(taskName, nextRun);
+  int get hashCode => Object.hash(scriptName, taskName, nextRun);
 }

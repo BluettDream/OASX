@@ -34,17 +34,42 @@ class OverviewController extends GetxController with LogMixin {
     final nextRun =
         formatDateTime(DateTime.now().subtract(const Duration(days: 1)));
     final argsController = Get.find<ArgsController>();
-    await argsController.updateScriptTask(name, model.taskName.value, true);
-    await argsController.updateScriptTaskNextRun(
+    final updateRet =
+        await argsController.updateScriptTask(name, model.taskName.value, true);
+    if (!updateRet) {
+      Get.snackbar(I18n.error.tr, 'Enable task fail',
+          duration: const Duration(seconds: 2));
+      isWaitingLoading.value = false;
+      return;
+    }
+    final syncRet = await argsController.updateScriptTaskNextRun(
         name, model.taskName.value, nextRun);
+    if (updateRet && syncRet) {
+      Get.snackbar(I18n.tip.tr, I18n.success.tr,
+          duration: const Duration(seconds: 2));
+    } else {
+      Get.snackbar(I18n.error.tr, '', duration: const Duration(seconds: 2));
+    }
     isPendingLoading.value = false;
   }
 
   Future<void> onMoveToWaiting(TaskItemModel model) async {
     isWaitingLoading.value = true;
-    await Get.find<ArgsController>()
+    final updateRet = await Get.find<ArgsController>()
         .updateScriptTask(name, model.taskName.value, true);
-    await ApiClient().syncNextRun(name, model.taskName.value);
+    if (!updateRet) {
+      Get.snackbar(I18n.error.tr, 'Enable task fail',
+          duration: const Duration(seconds: 2));
+      isWaitingLoading.value = false;
+      return;
+    }
+    final syncRet = await ApiClient().syncNextRun(name, model.taskName.value);
+    if (updateRet && syncRet) {
+      Get.snackbar(I18n.tip.tr, I18n.success.tr,
+          duration: const Duration(seconds: 2));
+    } else {
+      Get.snackbar(I18n.error.tr, '', duration: const Duration(seconds: 2));
+    }
     isWaitingLoading.value = false;
   }
 

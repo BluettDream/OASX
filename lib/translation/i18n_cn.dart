@@ -102,6 +102,7 @@ final Map<String, String> _cn_ui = {
   I18n.auto_deploy: '自动部署OAS',
   I18n.login_error: '登录失败',
   I18n.login_error_msg: 'OAS连接失败,请确认OAS正在运行',
+  I18n.success: '成功',
 };
 
 final Map<String, String> _cn_menu = {

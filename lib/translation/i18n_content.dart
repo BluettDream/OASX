@@ -100,6 +100,7 @@ class I18n {
   static const String auto_deploy = 'Auto deploy';
   static const String login_error = 'Login error';
   static const String login_error_msg = 'The OAS connection fails, confirm that OAS is running';
+  static const String success = 'Success';
 
   // 菜单项相关
   static const String overview = 'Overview';

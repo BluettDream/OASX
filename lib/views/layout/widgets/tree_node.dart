@@ -79,21 +79,24 @@ class TreeNode1State extends State<TreeNode1> {
 
   Widget buildChild(BuildContext context, Text title, Icon icon) {
     if (_isLeaf && !notTaskList.contains(widget.title)) {
-      return LongPressDraggable<Map<String, dynamic>>(
-        data: {
-          'model': TaskItemModel('', widget.title, ''),
-          'source': 'treeNode'
-        },
-        feedback: _buildFeedback(context),
-        child: TextButton(
-            style: ButtonStyle(
-              padding:
-                  MaterialStateProperty.all(const EdgeInsets.only(left: 20)),
-              alignment: Alignment.centerLeft,
-            ),
-            onPressed: onPressed,
-            child: title),
-      );
+      return Obx(() {
+        return LongPressDraggable<Map<String, dynamic>>(
+          data: {
+            'model': TaskItemModel(
+                Get.find<NavCtrl>().selectedScript.value, widget.title, ''),
+            'source': 'treeNode'
+          },
+          feedback: _buildFeedback(context),
+          child: TextButton(
+              style: ButtonStyle(
+                padding:
+                    WidgetStateProperty.all(const EdgeInsets.only(left: 20)),
+                alignment: Alignment.centerLeft,
+              ),
+              onPressed: onPressed,
+              child: title),
+        );
+      });
     }
     return _isLeaf
         ? TextButton(
@@ -112,11 +115,8 @@ class TreeNode1State extends State<TreeNode1> {
   }
 
   void Function()? onPressed() {
-    print(widget.title);
     widget.onTap!(widget.title);
-    setState(() {
-      _isExpanded = !_isExpanded;
-    });
+    setState(() => _isExpanded = !_isExpanded);
     return null;
   }
 

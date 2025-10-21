@@ -126,9 +126,10 @@ class TaskItemView extends StatelessWidget {
                           return Text('Error: ${snapshot.error}');
                         } else {
                           return Args(
-                                  scriptName: model.scriptName,
-                                  taskName: model.taskName.value)
-                              .constrained(
+                            scriptName: model.scriptName,
+                            taskName: model.taskName.value,
+                            groupDraggable: false,
+                          ).constrained(
                             minWidth: maxWidth,
                             minHeight: maxHeight,
                             maxWidth: maxWidth,
