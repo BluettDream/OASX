@@ -50,6 +50,7 @@ class LoginController extends GetxController {
       final loginSuccess = await ApiClient().testAddress();
       if (loginSuccess) {
         await Get.closeCurrentSnackbar();
+        await Get.find<LocaleService>().refreshTransFromRemote();
         Get.offAllNamed('/main');
         return true;
       }

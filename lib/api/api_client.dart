@@ -173,6 +173,16 @@ class ApiClient {
     return res.isSuccess && res.data == true;
   }
 
+  Future<Map<String, Map<String, String>>> getAdditionalTranslate() async {
+    final res = await request(() => get('/home/additional_translate'));
+    Map<String, Map<String, String>> result = {};
+    if (res.isSuccess) {
+      result["zh_CN"] = (res.data["zh-CN"] as Map).cast<String, String>();
+      result["en_US"] = (res.data["en-US"] as Map).cast<String, String>();
+    }
+    return result;
+  }
+
 // ----------------------------------   菜单项管理   ----------------------------------
   Future<Map<String, List<String>>> getScriptMenu() async {
     final res = await request(() => get('/script_menu'));
