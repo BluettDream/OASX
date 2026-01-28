@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_nb_net/flutter_net.dart';
 import 'package:get/get.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
@@ -19,13 +21,31 @@ class ApiResult<T> {
   final String? error;
   final int? code;
 
-  bool get isSuccess => data != null;
+  ApiResult({this.data, this.error, this.code});
+
+  bool get isSuccess => error == null || error!.isEmpty;
 
   ApiResult.success(this.data)
       : error = null,
         code = null;
 
   ApiResult.failure(this.error, [this.code]) : data = null;
+
+  factory ApiResult.fromJson(Map<String, dynamic> json) {
+    return ApiResult(
+      data: json["data"],
+      error: json["error"],
+      code: json["code"],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "data": this.data,
+      "error": this.error,
+      "code": this.code,
+    };
+  }
 }
 
 class ApiClient {
@@ -61,41 +81,34 @@ class ApiClient {
   }
 
   /// common request method
-  Future<ApiResult<T>> request<T>(Future<Result<T>> Function() apiFn) async {
+  Future<ApiResult<T>> request<T>(
+    Future<Result<dynamic>> Function() apiFn, {
+    void Function(String msg, int code)? onError,
+  }) async {
     try {
       final res = await apiFn();
       return res.when(
-        success: (data) => ApiResult.success(data),
+        success: (data) => ApiResult.fromJson(data),
         failure: (msg, code) {
-          printError(info: '${I18n.network_error_code}: $msg | $code'.tr);
-          switch (code) {
-            case 403:
-              break;
-            case 404:
-              showNetErrCodeSnackBar(I18n.network_not_found.tr, code);
-              break;
-            default:
-              showNetErrCodeSnackBar(msg, code);
-              break;
-          }
+          if (onError != null) onError(msg, code);
           return ApiResult.failure(msg, code);
         },
       );
     } catch (e) {
-      printError(info: '${I18n.network_error.tr}: $e');
-      showNetErrSnackBar();
+      printError(info: '$e');
       return ApiResult.failure(e.toString());
     }
   }
 
 // ----------------------------------   服务端地址测试   ----------------------------------
   Future<bool> testAddress() async {
-    final res = await request(() => get('/test'));
+    final res = await request(() => get('/test'), onError: (msg, code) {});
     return res.isSuccess && res.data == 'success';
   }
 
   Future<bool> killServer() async {
-    final res = await request(() => get('/home/kill_server'));
+    final res =
+        await request(() => get('/home/kill_server'), onError: (msg, code) {});
     return res.isSuccess && res.data == 'success';
   }
 
@@ -137,11 +150,10 @@ class ApiClient {
   }
 
   Future<UpdateInfoModel> getUpdateInfo() async {
-    final res = await request(() => get(
-          '/home/update_info',
-          decodeType: UpdateInfoModel(),
-        ));
-    return res.isSuccess ? res.data : UpdateInfoModel();
+    final res = await request(() => get('/home/update_info'));
+    return res.isSuccess
+        ? UpdateInfoModel.fromJson(res.data)
+        : UpdateInfoModel();
   }
 
   Future<String?> getExecuteUpdate() async {
@@ -159,6 +171,16 @@ class ApiClient {
           data: Messages().all_cn_translate,
         ));
     return res.isSuccess && res.data == true;
+  }
+
+  Future<Map<String, Map<String, String>>> getAdditionalTranslate() async {
+    final res = await request(() => get('/home/additional_translate'));
+    Map<String, Map<String, String>> result = {};
+    if (res.isSuccess) {
+      result["zh_CN"] = (res.data["zh-CN"] as Map).cast<String, String>();
+      result["en_US"] = (res.data["en-US"] as Map).cast<String, String>();
+    }
+    return result;
   }
 
 // ----------------------------------   菜单项管理   ----------------------------------
@@ -219,6 +241,33 @@ class ApiClient {
     return res.isSuccess && res.data;
   }
 
+  Future<bool> copyTask(
+      String taskName, String copyConfigName, String sourceConfigName) async {
+    final res = await request(() => put(
+          '/config/task/copy',
+          queryParameters: {
+            'task_name': taskName,
+            'dest_config_name': copyConfigName,
+            'source_config_name': sourceConfigName
+          },
+        ));
+    return res.isSuccess && res.data;
+  }
+
+  Future<bool> copyGroup(String taskName, String groupName,
+      String copyConfigName, String sourceConfigName) async {
+    final res = await request(() => put(
+          '/config/task/group/copy',
+          queryParameters: {
+            'task_name': taskName,
+            'group_name': groupName,
+            'dest_config_name': copyConfigName,
+            'source_config_name': sourceConfigName
+          },
+        ));
+    return res.isSuccess && res.data;
+  }
+
 // ---------------------------------   脚本实例管理   ----------------------------------
 
   Future<Map<String, dynamic>> getScriptTask(
@@ -242,8 +291,8 @@ class ApiClient {
     return res.isSuccess && res.data == true;
   }
 
-  Future<bool> syncNextRun(
-      String scriptName, String taskName, {String? targetDt}) async {
+  Future<bool> syncNextRun(String scriptName, String taskName,
+      {String? targetDt}) async {
     final res = await request(() => put('/$scriptName/$taskName/sync_next_run',
         queryParameters: {'target_dt': targetDt}));
     return res.isSuccess && res.data == true;
@@ -256,12 +305,12 @@ class ApiClient {
 
   void showNetErrSnackBar() {
     Get.snackbar(I18n.network_error.tr, I18n.network_connect_timeout.tr,
-        duration: const Duration(seconds: 2));
+        duration: const Duration(seconds: 5));
   }
 
   void showNetErrCodeSnackBar(String msg, int code) {
     Get.snackbar(
         I18n.network_error.tr, '${I18n.network_error_code.tr}: $code | $msg',
-        duration: const Duration(seconds: 2));
+        duration: const Duration(seconds: 5));
   }
 }

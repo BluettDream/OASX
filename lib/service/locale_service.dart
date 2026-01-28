@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:oasx/api/api_client.dart';
 import 'package:oasx/model/const/storage_key.dart';
 
 class LocaleService extends GetxService {
@@ -37,5 +38,11 @@ class LocaleService extends GetxService {
     final code = _storage.read(StorageKey.language.name);
     if (code == null) return fallbackLocale;
     return Locale(code);
+  }
+
+  Future<void> refreshTransFromRemote() async {
+    final additionalTrans = await ApiClient().getAdditionalTranslate();
+    Get.appendTranslations(additionalTrans);
+    _updateLocale(language.value);
   }
 }

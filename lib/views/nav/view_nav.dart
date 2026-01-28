@@ -3,13 +3,14 @@ library nav;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/component/blur_loading_overlay.dart';
 import 'package:oasx/model/script_model.dart';
 import 'package:oasx/service/script_service.dart';
 import 'package:oasx/service/websocket_service.dart';
+import 'package:oasx/views/layout/widgets/tree_view.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:oasx/views/args/args_view.dart';
 import 'package:styled_widget/styled_widget.dart';
-import 'package:treemenu2/treemenu2.dart';
 
 import 'package:oasx/views/overview/overview_view.dart';
 import 'package:oasx/api/api_client.dart';
@@ -27,38 +28,31 @@ class Nav extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final controller = Get.find<NavCtrl>();
         return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              // 保证至少占满屏幕高度，但如果内容更高就让它自适应
-              minHeight: constraints.maxHeight,
-            ),
-            child: IntrinsicHeight(
-              child: _navigationRail(context),
-            ),
-          ),
+          child: IntrinsicHeight(
+            child: Obx(() {
+              return NavigationRail(
+                selectedIndex: controller.selectedIndex.value,
+                onDestinationSelected: (value) =>
+                    {controller.switchScript(value)},
+                labelType: NavigationRailLabelType.all, // 就是是否显示文字
+                // elevation: 20, // 影深度
+                useIndicator: true, // 指示器
+                trailing: _trailing(context),
+                minWidth: 48,
+                destinations: _destinations(context, controller),
+              );
+            }),
+          ).constrained(minHeight: constraints.maxHeight),
         );
       },
     );
   }
 
-  Widget _navigationRail(BuildContext context) {
-    return GetX<NavCtrl>(builder: (controller) {
-      return NavigationRail(
-        selectedIndex: controller.selectedIndex.value,
-        onDestinationSelected: (value) => {controller.switchScript(value)},
-        labelType: NavigationRailLabelType.all, // 就是是否显示文字
-        // elevation: 20, // 影深度
-        useIndicator: true, // 指示器
-        trailing: _trailing(context),
-        minWidth: 48,
-        destinations: _destinations(context, controller.navNameList),
-      );
-    });
-  }
-
   List<NavigationRailDestination> _destinations(
-      BuildContext context, List<String> names) {
+      BuildContext context, NavCtrl controller) {
+    final names = controller.navNameList;
     if (names.length <= 1) {
       return [
         NavigationRailDestination(
@@ -80,16 +74,37 @@ class Nav extends StatelessWidget {
             ));
       }
       return NavigationRailDestination(
-          icon: GestureDetector(
-              child: const Icon(Icons.play_circle),
-              onSecondaryTapDown: (details) {
-                if (PlatformUtils.isMobile) return;
-                _showContextMenu(context, details.globalPosition, element);
-              },
-              onLongPressStart: (details) {
-                if (!PlatformUtils.isMobile) return;
-                _showContextMenu(context, details.globalPosition, element);
-              }),
+          icon: DragTarget<Map<String, dynamic>>(
+              onWillAcceptWithDetails: (details) {
+            if (details.data.isEmpty ||
+                details.data.length != 2 ||
+                details.data['source'] == null ||
+                details.data['model'] == null) {
+              return false;
+            }
+            final model = details.data['model'] as TaskItemModel;
+            return model.scriptName != element;
+          }, onAcceptWithDetails: (details) async {
+            final model = details.data['model'] as TaskItemModel;
+            await controller.copyTask(model, element);
+          }, builder: (context, candidateData, rejectedData) {
+            return Obx(() {
+              return BlurLoadingOverlay(
+                  loading: controller.isCopyLoadingMap[element] ?? false,
+                  child: GestureDetector(
+                      child: const Icon(Icons.play_circle),
+                      onSecondaryTapDown: (details) {
+                        if (PlatformUtils.isMobile) return;
+                        _showContextMenu(
+                            context, details.globalPosition, element);
+                      },
+                      onLongPressStart: (details) {
+                        if (!PlatformUtils.isMobile) return;
+                        _showContextMenu(
+                            context, details.globalPosition, element);
+                      }));
+            });
+          }),
           label: GestureDetector(
               child: Text(
                 element.tr,

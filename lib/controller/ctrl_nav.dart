@@ -12,6 +12,7 @@ class NavCtrl extends GetxController {
     'Home': [],
   }.obs;
   var scriptMenuJson = <String, List<String>>{}.obs;
+  final isCopyLoadingMap = {}.obs;
 
   @override
   Future<void> onInit() async {
@@ -20,7 +21,7 @@ class NavCtrl extends GetxController {
     homeMenuJson.value = await ApiClient().getHomeMenu();
     scriptMenuJson.value = await ApiClient().getScriptMenu();
     // oas删掉之后可去除
-    homeMenuJson.removeWhere((k,v) => k == 'Tool' || k == 'Updater');
+    homeMenuJson.removeWhere((k, v) => k == 'Tool' || k == 'Updater');
     super.onInit();
   }
 
@@ -76,7 +77,7 @@ class NavCtrl extends GetxController {
     return result;
   }
 
-  void switchContent(String menu) {
+  Future<void> switchContent(String menu) async {
     if (!useablemenus.contains(menu)) {
       return;
     }
@@ -90,7 +91,7 @@ class NavCtrl extends GetxController {
       return;
     }
     final argsController = Get.find<ArgsController>();
-    argsController.loadGroups(config: selectedScript.value, task: menu);
+    await argsController.loadGroups(config: selectedScript.value, task: menu);
   }
 
   Future<void> addConfig(String newName, String templateName) async {
@@ -150,5 +151,28 @@ class NavCtrl extends GetxController {
     }
     Get.put(tag: newName, permanent: true, OverviewController(name: newName));
     Get.find<ScriptService>().addScriptModel(newName);
+  }
+
+  Future<bool> copyTask(TaskItemModel model, String copyConfigName) async {
+    isCopyLoadingMap[copyConfigName] = true;
+    bool ret = false;
+    String tipMsg = '';
+    if (model.groupName != null && model.groupName!.isNotEmpty) {
+      ret = await ApiClient().copyGroup(model.taskName.value, model.groupName!,
+          copyConfigName, model.scriptName);
+      tipMsg =
+          '${model.scriptName}[${model.taskName.value.tr}][${model.groupName!.tr}] -> $copyConfigName';
+    } else {
+      ret = await ApiClient()
+          .copyTask(model.taskName.value, copyConfigName, model.scriptName);
+      tipMsg =
+          '${model.scriptName}[${model.taskName.value.tr}] -> $copyConfigName';
+    }
+    if (ret) {
+      Get.snackbar(I18n.copy_success.tr, tipMsg,
+          duration: const Duration(seconds: 2));
+    }
+    isCopyLoadingMap[copyConfigName] = false;
+    return ret;
   }
 }

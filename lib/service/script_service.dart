@@ -53,20 +53,22 @@ class ScriptService extends GetxService {
     super.onClose();
   }
 
-  Future<void> connectScript(String name, {bool force = false}) async {
-    if (!scriptModelMap.containsKey(name)) addScriptModel(name);
+  Future<void> connectScript(String name) async {
+    if (!scriptModelMap.containsKey(name)) {
+      addScriptModel(name);
+    }
     wsService.removeAllListeners(name);
     // 监听ws客户端状态, 脚本状态同步更新
     final client = await wsService.connect(
-        name: name, listener: (mg) => wsListener(mg, name), force: force);
+        name: name, listener: (mg) => wsListener(mg, name));
     client.status.listen((wsStatus) =>
         scriptModelMap[name]?.update(state: wsStatus.scriptState));
   }
 
-  Future<void> startScript(String name, {bool force = false}) async {
+  Future<void> startScript(String name) async {
     if (!scriptModelMap.containsKey(name)) return;
-    if (isRunning(name) && !force) return;
-    await connectScript(name, force: force);
+    if (isRunning(name)) return;
+    await connectScript(name);
     await wsService.send(name, 'start');
   }
 
@@ -91,12 +93,12 @@ class ScriptService extends GetxService {
       List<dynamic> pending = data['schedule']['pending'];
       List<dynamic> waiting = data['schedule']['waiting'];
       TaskItemModel runningTask = run.isNotEmpty
-          ? TaskItemModel(run['name'], run['next_run'])
+          ? TaskItemModel(name, run['name'], run['next_run'])
           : TaskItemModel.empty();
       final pendingList =
-          pending.map((e) => TaskItemModel(e['name'], e['next_run'])).toList();
+          pending.map((e) => TaskItemModel(name, e['name'], e['next_run'])).toList();
       final waitingList =
-          waiting.map((e) => TaskItemModel(e['name'], e['next_run'])).toList();
+          waiting.map((e) => TaskItemModel(name, e['name'], e['next_run'])).toList();
       scriptModelMap[name]!.update(
           runningTask: runningTask,
           pendingTaskList: pendingList,

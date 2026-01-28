@@ -21,11 +21,12 @@ final Map<String, String> _cn_ui = {
   I18n.network_error_code: '错误代码',
   I18n.network_connect_timeout: '连接超时',
   I18n.network_not_found: '找不到网络',
+  I18n.network_server_error: 'OAS内部服务异常',
   I18n.scheduler: '调度器',
   I18n.running: '运行中',
   I18n.pending: '队列中',
   I18n.waiting: '等待中',
-  I18n.task_setting: '设置',
+  I18n.task_setting: '任务设置',
   I18n.log: '日志',
   I18n.clear_log: '清空日志',
   I18n.login: '登录',
@@ -46,6 +47,7 @@ final Map<String, String> _cn_ui = {
   I18n.are_you_sure_kill: '真的要关闭脚本服务吗',
   I18n.kill_server_success: '关闭服务成功',
   I18n.kill_server_failure: '关闭服务失败',
+  I18n.kill_server_failure_msg: '请检查OAS服务是否已经关闭,然后手动登出',
   I18n.find_oas_new_version: '发现OAS新版本',
   I18n.oas_latest_version: 'OAS已是最新版本',
   I18n.current_branch: '当前分支',
@@ -98,6 +100,9 @@ final Map<String, String> _cn_ui = {
   I18n.auto_run_script: '自动启动脚本',
   I18n.start_success: '启动成功',
   I18n.auto_deploy: '自动部署OAS',
+  I18n.login_error: '登录失败',
+  I18n.login_error_msg: 'OAS连接失败,请确认OAS正在运行',
+  I18n.success: '成功',
 };
 
 final Map<String, String> _cn_menu = {
